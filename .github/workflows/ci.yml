@@ -1,0 +1,28 @@
+name: CI Pipeline
+on:
+  push:
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+
+    env:
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start services
+        run: docker compose up -d
+
+      - name: Show running containers
+        run: docker ps
+
+      - name: Run integration test (inside docker network)
+        run: docker compose run --rm testserver
+
+      - name: Shutdown containers
+        if: always()
+        run: docker compose down

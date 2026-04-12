@@ -5,7 +5,6 @@ services:
     restart: unless-stopped
     build:
       context: .
-      dockerfile: server.Dockerfile
     environment:
       # set database credentials
       DB_HOST: mysql
@@ -41,24 +40,21 @@ services:
       MYSQL_USER: flask
       MYSQL_PASSWORD: password
 
-  test:
-    image: flask_test:latest
-    container_name: flask_test
+  testserver:
+    image: test:latest
+    container_name: testserver
     restart: unless-stopped
     build:
-      context: .
-      dockerfile: test.Dockerfile
-    links:
-      # network connection with these services
-      - app
+      context: test.Dockerfile
     depends_on:
-      # build those images first
       - app
+      - mysql
+    profiles:
+      - test
 
 # volumes definition here
 volumes:
   # just a persistance data
   mysql-data:
     driver: local
-
 
