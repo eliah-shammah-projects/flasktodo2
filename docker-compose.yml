@@ -45,7 +45,8 @@ services:
     container_name: testserver
     restart: unless-stopped
     build:
-      context: test.Dockerfile
+      context: .
+      dockerfile: test.Dockerfile
     depends_on:
       - app
       - mysql
