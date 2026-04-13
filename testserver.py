@@ -26,8 +26,8 @@ def wait_for_app(url, timeout=10, interval=1):
 
 if __name__ == "__main__":
     # Espera o app estar pronto
-    if not wait_for_app(BASE_URL, timeout=10, interval=1):
-        print("TEST FAILED: Não foi possível conectar ao app em http://app:5000 após 10s.")
+    if not wait_for_app(BASE_URL, timeout=60, interval=2):
+        print("TEST FAILED: Não foi possível conectar ao app em http://app:5000 após 60s.")
         sys.exit(1)
     try:
         response = requests.post(URL, json=data)

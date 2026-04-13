@@ -50,8 +50,6 @@ services:
     depends_on:
       - app
       - mysql
-    profiles:
-      - test
 
 # volumes definition here
 volumes:
