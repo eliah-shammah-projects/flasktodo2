@@ -1,4 +1,4 @@
 FROM python
 WORKDIR /tests
-COPY testserver .
+COPY testserver.py .
 CMD ["python", "testserver.py"]
