@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
+import google.generativeai as genai
 import os
 
 app = Flask(__name__)
@@ -23,9 +24,7 @@ def create_tables():
 
 @app.route('/', methods=["GET"])
 def index():
-    t = Todo.query.all()
-    todos_list = [{"id": todo.id, "title": todo.title, "complete": todo.complete} for todo in t]
-    return jsonify(todos_list)
+    return render_template('index.html')
 
 @app.route('/api/todos', methods=["GET"])
 def get_todos():
@@ -60,6 +59,29 @@ def delete(todo_id):
     db.session.delete(todo)
     db.session.commit()
     return jsonify({"result": "deleted", "id": todo_id})
+
+@app.route('/suggest', methods=["POST"])
+def suggest():
+    data = request.json
+    if not data or not data.get("title"):
+        return jsonify({"error": "title is required"}), 400
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return jsonify({"error": "AI not configured"}), 503
+
+    try:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        prompt = (
+            f'Fix spelling and grammar in this task title, make it clear and concise. '
+            f'Return only the corrected title, nothing else: "{data["title"]}"'
+        )
+        response = model.generate_content(prompt)
+        return jsonify({"suggestion": response.text.strip()})
+    except Exception:
+        return jsonify({"error": "AI suggestion failed"}), 500
+
 
 if __name__ == "__main__":
     app.run(host=os.getenv('IP', '0.0.0.0'), debug=True)

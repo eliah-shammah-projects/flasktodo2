@@ -6,22 +6,87 @@
 {% block body %}
 <h1>Todo app</h1>
 <div class="box">
-    <form action="/add" method="post">
-        <label for="title">Todo title</label>
-        <input type="text" name="title" placeholder="What needs to be done?"><br>
+    <form id="add-form">
+        <label for="title-input">Todo title</label>
+        <input type="text" id="title-input" placeholder="What needs to be done?"><br>
         <button type="submit">Add</button>
     </form>
 
-    {% for todo in list_todo %}
-        <p>{{ todo.id }} | {{ todo.title }}</p>
-        {% if todo.complete %}
-        <span>Complete</span>
-        {% else %}
-            <span>Not complete</span>
-        {% endif %}
-        <a href="/update/{{ todo.id }}">Update</a>
-        <a href="/delete/{{ todo.id }}">Delete</a>
-    {% endfor %}
-</div>
-{% endblock %}
+    <div id="suggestion-box" style="display:none; margin-top:10px; padding:10px; border:1px solid #ccc;">
+        <p>AI suggestion: <strong id="suggestion-text"></strong></p>
+        <button id="use-suggestion">Use suggestion</button>
+        <button id="keep-original">Keep original</button>
+    </div>
 
+    <div id="todo-list"></div>
+</div>
+
+<script>
+    let pendingOriginal = '';
+    let pendingSuggestion = '';
+
+    async function loadTodos() {
+        const res = await fetch('/api/todos');
+        const todos = await res.json();
+        const list = document.getElementById('todo-list');
+        list.innerHTML = todos.map(t => `
+            <p>
+                ${t.id} | ${t.title} |
+                ${t.complete ? '<span>Complete</span>' : '<span>Not complete</span>'}
+                <a href="/update/${t.id}">Update</a>
+                <a href="/delete/${t.id}">Delete</a>
+            </p>
+        `).join('');
+    }
+
+    async function addTodo(title) {
+        await fetch('/add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title})
+        });
+        document.getElementById('title-input').value = '';
+        document.getElementById('suggestion-box').style.display = 'none';
+        pendingOriginal = '';
+        pendingSuggestion = '';
+        loadTodos();
+    }
+
+    document.getElementById('add-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const title = document.getElementById('title-input').value.trim();
+        if (!title) return;
+
+        pendingOriginal = title;
+
+        try {
+            const res = await fetch('/suggest', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title})
+            });
+            const data = await res.json();
+
+            if (data.suggestion && data.suggestion !== title) {
+                pendingSuggestion = data.suggestion;
+                document.getElementById('suggestion-text').textContent = data.suggestion;
+                document.getElementById('suggestion-box').style.display = 'block';
+            } else {
+                addTodo(title);
+            }
+        } catch {
+            addTodo(title);
+        }
+    });
+
+    document.getElementById('use-suggestion').addEventListener('click', function() {
+        addTodo(pendingSuggestion);
+    });
+
+    document.getElementById('keep-original').addEventListener('click', function() {
+        addTodo(pendingOriginal);
+    });
+
+    loadTodos();
+</script>
+{% endblock %}
