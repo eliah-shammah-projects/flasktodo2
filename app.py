@@ -1,4 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+# Rota para retornar todos os todos em JSON
+@app.route('/api/todos', methods=["GET"])
+def get_todos():
+    todos = Todo.query.all()
+    todos_list = [{"id": t.id, "title": t.title, "complete": t.complete} for t in todos]
+    return jsonify(todos_list)
 from flask_sqlalchemy import SQLAlchemy
 import os
 app = Flask(__name__)
