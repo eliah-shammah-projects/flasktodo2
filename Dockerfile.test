@@ -1,5 +1,5 @@
 FROM python
 WORKDIR /tests
-RUN pip install requests
+RUN pip install requests Flask Flask-RESTful flask-sqlalchemy PyMySQL
 COPY testserver.py .
 CMD ["python", "testserver.py"]

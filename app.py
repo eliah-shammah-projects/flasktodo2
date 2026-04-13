@@ -33,31 +33,38 @@ def create_tables():
 
 @app.route('/', methods=["GET"])
 def index():
-    print("index")
     t = Todo.query.all()
-    return render_template("index.html", list_todo=t)
+    todos_list = [{"id": todo.id, "title": todo.title, "complete": todo.complete} for todo in t]
+    return jsonify(todos_list)
 
 @app.route('/add', methods=["POST"])
 def add():
-    title = request.form.get("title")
-    new_todo = Todo(title=title,complete=False)
+    # Aceita tanto form quanto JSON
+    title = request.form.get("title") or (request.json and request.json.get("title"))
+    if not title:
+        return jsonify({"error": "title is required"}), 400
+    new_todo = Todo(title=title, complete=False)
     db.session.add(new_todo)
     db.session.commit()
-    return redirect(url_for("index"))
+    return jsonify({"id": new_todo.id, "title": new_todo.title, "complete": new_todo.complete}), 201
 
 @app.route('/update/<int:todo_id>')
 def update(todo_id):
     todo = Todo.query.filter_by(id=todo_id).first()
+    if not todo:
+        return jsonify({"error": "not found"}), 404
     todo.complete = not todo.complete
     db.session.commit()
-    return redirect(url_for("index"))
+    return jsonify({"id": todo.id, "title": todo.title, "complete": todo.complete})
 
 @app.route('/delete/<int:todo_id>')
 def delete(todo_id):
     todo = Todo.query.filter_by(id=todo_id).first()
+    if not todo:
+        return jsonify({"error": "not found"}), 404
     db.session.delete(todo)
     db.session.commit()
-    return redirect(url_for("index"))
+    return jsonify({"result": "deleted", "id": todo_id})
 
 if __name__ == "__main__":
     #db.create_all()
