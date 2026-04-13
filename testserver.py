@@ -2,7 +2,7 @@ import requests
 import time
 import sys
 
-BASE_URL = "http://web:5000"  # שם ה-service בדוקר
+BASE_URL = "http://app:5000"  # שם ה-service בדוקר
 URL = f"{BASE_URL}/add"
 
 data = {
