@@ -1,4 +1,5 @@
 FROM python
 WORKDIR /tests
+RUN pip install requests
 COPY testserver.py .
 CMD ["python", "testserver.py"]
