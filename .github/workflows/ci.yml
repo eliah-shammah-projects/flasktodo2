@@ -48,7 +48,29 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            docker network create app-network || true
+            docker start mysql 2>/dev/null || docker run -d \
+              --name mysql \
+              --network app-network \
+              -e MYSQL_ROOT_PASSWORD=password \
+              -e MYSQL_DATABASE=flask \
+              -e MYSQL_USER=flask \
+              -e MYSQL_PASSWORD=password \
+              -v mysql-data:/var/lib/mysql \
+              --restart unless-stopped \
+              mysql
+            sleep 15
             docker stop flasktodo2 || true
             docker rm flasktodo2 || true
             docker pull eliahushammah/flasktodo2:latest
-            docker run -d --name flasktodo2 -p 80:5000 eliahushammah/flasktodo2:latest
+            docker run -d \
+              --name flasktodo2 \
+              --network app-network \
+              -e DB_HOST=mysql \
+              -e DB_NAME=flask \
+              -e DB_USER=flask \
+              -e DB_PASSWORD=password \
+              -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+              -p 80:5000 \
+              --restart unless-stopped \
+              eliahushammah/flasktodo2:latest
