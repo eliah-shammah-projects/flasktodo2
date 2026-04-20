@@ -79,7 +79,8 @@ def suggest():
         )
         response = model.generate_content(prompt)
         return jsonify({"suggestion": response.text.strip()})
-    except Exception:
+    except Exception as e:
+        print(f"AI error: {e}", flush=True)
         return jsonify({"error": "AI suggestion failed"}), 500
 
 
