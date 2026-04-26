@@ -27,6 +27,10 @@ jobs:
       - name: Show running containers
         run: docker ps
 
+      - name: Show MySQL logs on failure
+        if: failure()
+        run: docker logs mysql
+
       - name: Run integration test (inside docker network)
         run: docker compose run --rm testserver
 
