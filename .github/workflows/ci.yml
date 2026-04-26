@@ -29,9 +29,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build Docker image para Docker Hub
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/flasktodo2:latest .
-
       - name: Push Docker image para Docker Hub
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/flasktodo2:latest
 
@@ -39,6 +36,16 @@ jobs:
       - name: Shutdown containers
         if: always()
         run: docker compose down
+
+      # --- Copiar arquivos para EC2 ---
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.yml,nginx,db"
+          target: "/home/ec2-user/app/"
 
       # --- Deploy no EC2 ---
       - name: Deploy no EC2
@@ -48,29 +55,9 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker network create app-network || true
-            docker start mysql 2>/dev/null || docker run -d \
-              --name mysql \
-              --network app-network \
-              -e MYSQL_ROOT_PASSWORD=password \
-              -e MYSQL_DATABASE=flask \
-              -e MYSQL_USER=flask \
-              -e MYSQL_PASSWORD=password \
-              -v mysql-data:/var/lib/mysql \
-              --restart unless-stopped \
-              mysql
-            sleep 15
-            docker stop flasktodo2 || true
-            docker rm flasktodo2 || true
-            docker pull eliahushammah/flasktodo2:latest
-            docker run -d \
-              --name flasktodo2 \
-              --network app-network \
-              -e DB_HOST=mysql \
-              -e DB_NAME=flask \
-              -e DB_USER=flask \
-              -e DB_PASSWORD=password \
-              -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
-              -p 80:5000 \
-              --restart unless-stopped \
-              eliahushammah/flasktodo2:latest
+            docker stop flasktodo2 mysql nginx || true
+            docker rm flasktodo2 mysql nginx || true
+            cd ~/app
+            export GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            docker compose pull app nginx
+            docker compose up -d app mysql nginx
