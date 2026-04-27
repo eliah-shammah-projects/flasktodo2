@@ -11,17 +11,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          DB_HOST=mysql
+          DB_NAME=${{ secrets.DB_NAME }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_DATABASE=${{ secrets.DB_NAME }}
+          MYSQL_USER=${{ secrets.DB_USER }}
+          MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }}
+          EOF
+
       - name: Start services
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          DB_HOST: mysql
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          MYSQL_DATABASE: ${{ secrets.DB_NAME }}
-          MYSQL_USER: ${{ secrets.DB_USER }}
-          MYSQL_PASSWORD: ${{ secrets.DB_PASSWORD }}
         run: docker compose up -d --build
 
       - name: Show running containers
@@ -73,14 +77,16 @@ jobs:
             docker stop flasktodo2 mysql nginx || true
             docker rm flasktodo2 mysql nginx || true
             cd ~/app
-            export GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            export DB_HOST=mysql
-            export DB_NAME=${{ secrets.DB_NAME }}
-            export DB_USER=${{ secrets.DB_USER }}
-            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            export MYSQL_DATABASE=${{ secrets.DB_NAME }}
-            export MYSQL_USER=${{ secrets.DB_USER }}
-            export MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }}
+            cat > .env << EOF
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            DB_HOST=mysql
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_DATABASE=${{ secrets.DB_NAME }}
+            MYSQL_USER=${{ secrets.DB_USER }}
+            MYSQL_PASSWORD=${{ secrets.DB_PASSWORD }}
+            EOF
             docker compose pull app nginx
             docker compose up -d app mysql nginx
