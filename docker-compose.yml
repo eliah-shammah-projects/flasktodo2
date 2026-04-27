@@ -14,8 +14,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    ports:
-      - "5001:5000"
+
 
   mysql:
     container_name: mysql
